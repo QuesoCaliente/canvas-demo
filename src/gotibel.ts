@@ -1,8 +1,6 @@
 export const GotibelRenderer = (canvas: HTMLCanvasElement) => {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Error al obtener el contexto 2D del canvas");
-  // canvas.style.border = "1px solid black";
-  // canvas.style.background = "#153f65";
   canvas.width = 600;
   canvas.height = 600;
 
@@ -90,4 +88,79 @@ export const GotibelRenderer = (canvas: HTMLCanvasElement) => {
   drawBody(canvas.width / 2, canvas.height / 2);
   drawEyes();
   drawMouth();
+};
+
+export const PixelPainter = (
+  canvas: HTMLCanvasElement,
+  options?: { color?: string; pixelSize?: number; preventDefault?: boolean }
+) => {
+  canvas.style.background = "#153f65";
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("Error al obtener el contexto 2D del canvas");
+  const color = options?.color ?? "#ff0000";
+  const pixelSize = Math.max(1, Math.floor(options?.pixelSize ?? 20));
+  const preventDefault = options?.preventDefault ?? true;
+  canvas.width = canvas.width || 600;
+  canvas.height = canvas.height || 600;
+
+  const getCanvasCoords = (clientX: number, clientY: number) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = Math.floor((clientX - rect.left) * scaleX);
+    const y = Math.floor((clientY - rect.top) * scaleY);
+    return { x, y };
+  };
+
+  let painting = false;
+
+  const paintAt = (clientX: number, clientY: number) => {
+    const { x, y } = getCanvasCoords(clientX, clientY);
+    ctx.fillStyle = color;
+    const half = Math.floor(pixelSize / 2);
+    ctx.fillRect(x - half, y - half, pixelSize, pixelSize);
+  };
+
+  const onPointerDown = (ev: PointerEvent) => {
+    if (preventDefault) ev.preventDefault();
+    painting = true;
+    const targetDown = ev.target as Element | null;
+    if (
+      targetDown &&
+      typeof (targetDown as any).setPointerCapture === "function"
+    ) {
+      (targetDown as any).setPointerCapture(ev.pointerId);
+    }
+    paintAt(ev.clientX, ev.clientY);
+  };
+
+  const onPointerMove = (ev: PointerEvent) => {
+    if (!painting) return;
+    if (preventDefault) ev.preventDefault();
+    paintAt(ev.clientX, ev.clientY);
+  };
+
+  const onPointerUp = (ev: PointerEvent) => {
+    if (preventDefault) ev.preventDefault();
+    painting = false;
+    const targetUp = ev.target as Element | null;
+    if (
+      targetUp &&
+      typeof (targetUp as any).releasePointerCapture === "function"
+    ) {
+      (targetUp as any).releasePointerCapture(ev.pointerId);
+    }
+  };
+
+  canvas.addEventListener("pointerdown", onPointerDown);
+  canvas.addEventListener("pointermove", onPointerMove);
+  globalThis.addEventListener("pointerup", onPointerUp);
+  return {
+    stop() {
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      globalThis.removeEventListener("pointerup", onPointerUp);
+    },
+  };
 };

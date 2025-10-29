@@ -19,39 +19,32 @@ export function CanvasRenderer(canvas: HTMLCanvasElement) {
   cheese.src = "queso.webp";
 
   cheese.addEventListener("load", () => {
-    ctx.drawImage(cheese, 80, 45); // Mismas dimensiones (32x32)
+    ctx.drawImage(cheese, 80, 45);
 
-    ctx.imageSmoothingEnabled = false; // Respeta pixel art
-    ctx.drawImage(cheese, 65, 110, 64, 64); // Ampliación x2      (64x64)
+    ctx.drawImage(cheese, 65, 110, 64, 64);
   });
 
-  // Inicialización
   let y = 100,
-    dy = 4;
+    velocity = 4;
   const x = 100,
-    dx = 2,
     radius = 25;
 
-  // Actualización de lógica
   const update = () => {
-    y += dy;
-    if (y + radius > canvas.height || y - radius < 0) dy *= -1;
+    y += velocity;
+    if (y + radius > canvas.height || y - radius < 0) velocity *= -1;
   };
 
-  // Renderizado y pintado
   const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = "deeppink";
+    ctx.fillStyle = "#ff0000";
     ctx.fill();
     ctx.closePath();
 
-    ctx.drawImage(cheese, canvas.width - cheese.width - 30, 45); // Mismas dimensiones (32x32)
-    ctx.imageSmoothingEnabled = false; // Respeta pixel art
+    ctx.drawImage(cheese, canvas.width - cheese.width - 30, 45);
   };
 
-  // Bucle del juego (update, draw, reinicio)
   function gameLoop() {
     update();
     draw();
